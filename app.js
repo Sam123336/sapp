@@ -139,7 +139,7 @@ function islogin(req, res, next) {
 mongoose.connect(process.env.MONGODB_URL)
     .then(() => {
         console.log('MongoDB connected');
-        const port = process.env.PORT || 8080;
+        const port = process.env.PORT || 5000;
         app.listen(port, () => {
             console.log(`Server is running on port ${port}`);
         });
