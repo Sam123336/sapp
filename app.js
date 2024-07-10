@@ -22,26 +22,60 @@ app.get('/', (req, res) => {
     res.render('register');
 });
 
+// app.post('/register', async (req, res) => {
+//     let { username, name, age, email, password } = req.body;
+//     let user = await userModel.findOne({ email: email });
+//     if (user) {
+//         return res.status(500).send('User already exists');
+//     }
+//     bcrypt.genSalt(10, function (err, salt) {
+//         bcrypt.hash(password, salt, async function (err, hash) {
+//             let user = await userModel.create({
+//                 username,
+//                 name,
+//                 age,
+//                 email,
+//                 password: hash
+//             });
+//             let token = jwt.sign({ email: email, userid: user._id, name: user.name }, "shhhh"); // Ensure name is included
+//             res.cookie('token', token);
+//             res.redirect('/profile');
+//         });
+//     });
+// });
 app.post('/register', async (req, res) => {
-    let { username, name, age, email, password } = req.body;
-    let user = await userModel.findOne({ email: email });
-    if (user) {
-        return res.status(500).send('User already exists');
-    }
-    bcrypt.genSalt(10, function (err, salt) {
-        bcrypt.hash(password, salt, async function (err, hash) {
-            let user = await userModel.create({
-                username,
-                name,
-                age,
-                email,
-                password: hash
-            });
-            let token = jwt.sign({ email: email, userid: user._id, name: user.name }, "shhhh"); // Ensure name is included
-            res.cookie('token', token);
-            res.redirect('/profile');
+    try {
+        let { username, name, age, email, password } = req.body;
+
+        // Check if user already exists
+        let existingUser = await userModel.findOne({ email: email });
+        if (existingUser) {
+            return res.status(400).send('User already exists');
+        }
+
+        // Generate salt and hash the password
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(password, salt);
+
+        // Create new user
+        let newUser = await userModel.create({
+            username,
+            name,
+            age,
+            email,
+            password: hash
         });
-    });
+
+        // Generate JWT token
+        let token = jwt.sign({ email: email, userid: newUser._id, name: newUser.name }, "shhhh");
+
+        // Set token in cookie and redirect to profile page
+        res.cookie('token', token);
+        res.redirect('/profile');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
 });
 
 
@@ -57,7 +91,7 @@ app.post('/login', async (req, res) => {
                 return res.status(500).send('Something went wrong');
             }
             if (result) {
-                let token = jwt.sign({ email: email, userid: user._id, name: name }, "shhhh"); // Ensure name is included
+                let token = jwt.sign({ email: email, userid: user._id, name: user.name }, "shhhh"); // Ensure name is included
                 res.cookie('token', token);
                 res.redirect('/profile');
             } else {
