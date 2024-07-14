@@ -20,8 +20,8 @@
                         <small class="mt-2 inline-block"><%= post.likes.length %> likes</small>
                         <div class="btns flex gap-4 mt-1">
                             <a class="text-blue-500" href="/like/<%= post._id %>">
-                                <%= post.likes.some(like => like.toString() === user._id.toString()) ? "Unlike" : "Like" %>
-                            </a>
+                             Like</a>
+
                             <a class="text-zinc-600" href="/edit/<%= post._id %>">Edit</a>
                         </div>
                     </div>
