@@ -1,3 +1,4 @@
+
 const express = require('express');
 const path = require('path');
 const mongoose = require('mongoose');
@@ -22,27 +23,6 @@ app.get('/', (req, res) => {
     res.render('register');
 });
 
-// app.post('/register', async (req, res) => {
-//     let { username, name, age, email, password } = req.body;
-//     let user = await userModel.findOne({ email: email });
-//     if (user) {
-//         return res.status(500).send('User already exists');
-//     }
-//     bcrypt.genSalt(10, function (err, salt) {
-//         bcrypt.hash(password, salt, async function (err, hash) {
-//             let user = await userModel.create({
-//                 username,
-//                 name,
-//                 age,
-//                 email,
-//                 password: hash
-//             });
-//             let token = jwt.sign({ email: email, userid: user._id, name: user.name }, "shhhh"); // Ensure name is included
-//             res.cookie('token', token);
-//             res.redirect('/profile');
-//         });
-//     });
-// });
 app.post('/register', async (req, res) => {
     try {
         let { username, name, age, email, password } = req.body;
@@ -78,7 +58,6 @@ app.post('/register', async (req, res) => {
     }
 });
 
-
 app.post('/login', async (req, res) => {
     try {
         let { email, password } = req.body;
@@ -91,7 +70,7 @@ app.post('/login', async (req, res) => {
                 return res.status(500).send('Something went wrong');
             }
             if (result) {
-                let token = jwt.sign({ email: email, userid: user._id, name: user.name }, "shhhh"); // Ensure name is included
+                let token = jwt.sign({ email: email, userid: user._id, name: user.name }, "shhhh");
                 res.cookie('token', token);
                 res.redirect('/profile');
             } else {
@@ -112,19 +91,13 @@ app.get('/logout', (req, res) => {
     res.redirect("/login");
 });
 
-// app.get('/profile', islogin, async (req, res) => {
-//    // Ensure req.user contains the name
-//    let user = await userModel.findOne({ email: req.user.email }).populate("post"); 
-//    console.log(req.user)
-//     res.render('profile', { user: req.user });
-// });
 app.get('/profile', islogin, async (req, res) => {
     try {
         let user = await userModel.findOne({ email: req.user.email }).populate("post");
+        console.log(user);  
         if (!user) {
             return res.status(404).send('User not found');
         }
-        console.log(user); // Ensure you log the entire user object
         res.render('profile', { user: user });
     } catch (err) {
         console.error(err);
@@ -134,9 +107,9 @@ app.get('/profile', islogin, async (req, res) => {
 
 app.post('/post', islogin, async (req, res) => {
     try {
-        let user = await userModel.findOne({ email: req.user.email }); // Use req.user.email to find the logged-in user
+        let user = await userModel.findOne({ email: req.user.email });
         if (!user) {
-            return res.status(404).send('User not found'); // Handle case where user is not found
+            return res.status(404).send('User not found');
         }
 
         let post = await postModel.create({ 
@@ -153,7 +126,18 @@ app.post('/post', islogin, async (req, res) => {
     }
 });
 
- 
+app.get("/like/:id", islogin, async (req, res) => {
+    let post = await postModel.findOne({ _id: req.params.id }).populate("user");
+    if(post.likes.indexOf(req.user._id) == -1) {
+        post.likes.push(req.user._id);
+    }
+    else{
+        post.likes.splice(post.likes.indexOf(req.user._id), 1);
+    }
+    await post.save();
+    res.redirect("/profile");
+});
+
 function islogin(req, res, next) {
     if (!req.cookies.token) {
         return res.redirect("/login");
