@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken');
 const userModel = require('./models/User');
 const postModel = require('./models/post');
 require('dotenv').config();
+const upload = require('./utils/multerconfig');
 
 const app = express();
 
@@ -18,9 +19,20 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 app.use(cookieParser());
 
+
 // Routes
 app.get('/', (req, res) => {
     res.render('register');
+});
+app.get("/profile/upload", (req, res) => {
+    res.render('profileupload');
+});
+app.post("/upload", islogin,upload.single("image"),async (req, res) => {
+    let user =await userModel.findOne({ email: req.user.email });
+    user.profilepic = req.file.filename;
+    await user.save();
+    res.redirect('/profile');
+
 });
 
 app.post('/register', async (req, res) => {
@@ -150,6 +162,15 @@ app.get("/like/:id", islogin, async (req, res) => {
     }
     await post.save();
     res.redirect("/profile");
+});
+app.get('/dashboard', islogin, async (req, res) => {
+    try {
+        let posts = await postModel.find().populate("user");
+        res.render('dashboard', { posts: posts, user: req.user });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
 });
 
 function islogin(req, res, next) {
