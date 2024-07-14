@@ -57,6 +57,20 @@ app.post('/register', async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+app.get('/edit/:id', async (req, res)=>{
+    let post = await postModel.findById(req.params.id);
+
+    res.render('edit', { post });
+})    
+app.post('/update/:id', async (req, res) => {
+    let { content } = req.body;
+    await postModel.findOneAndUpdate(
+        { _id: req.params.id },
+        { content },
+        { new: true }
+    );
+    res.redirect('/profile');
+});
 
 app.post('/login', async (req, res) => {
     try {
@@ -163,3 +177,4 @@ mongoose.connect(process.env.MONGODB_URL)
         });
     })
     .catch((err) => console.error('MongoDB connection error:', err));
+    
