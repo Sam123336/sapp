@@ -1,4 +1,4 @@
-
+//app.js
 const express = require('express');
 const path = require('path');
 const mongoose = require('mongoose');
@@ -69,20 +69,37 @@ app.post('/register', async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
-app.get('/edit/:id', async (req, res)=>{
-    let post = await postModel.findById(req.params.id);
-
-    res.render('edit', { post });
-})    
-app.post('/update/:id', async (req, res) => {
-    let { content } = req.body;
-    await postModel.findOneAndUpdate(
-        { _id: req.params.id },
-        { content },
-        { new: true }
-    );
-    res.redirect('/profile');
+app.get("/like/:id", islogin, async (req, res) => {
+    let post = await postModel.findOne({ _id: req.params.id }).populate("user");
+    if(post.likes.indexOf(req.user.userid) == -1) {
+        post.likes.push(req.user.userid);
+    }
+    else{
+        post.likes.splice(post.likes.indexOf(req.user.userid), 1);
+    }
+    await post.save();
+    res.redirect("/dashboard");
 });
+
+app.get('/profile/:id', async (req, res) => {
+    try {
+        // Find user by ID and populate their posts
+        let user = await userModel.findById(req.params.id).populate('post');
+
+        if (!user) {
+            return res.status(404).send('User not found');
+        }
+
+        res.render('profile', { user });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
+
+
+
 
 app.post('/login', async (req, res) => {
     try {
@@ -98,7 +115,7 @@ app.post('/login', async (req, res) => {
             if (result) {
                 let token = jwt.sign({ email: email, userid: user._id, name: user.name }, "shhhh");
                 res.cookie('token', token);
-                res.redirect('/profile');
+                res.redirect('/dashboard');
             } else {
                 res.status(400).send('Invalid email or password');
             }
@@ -131,16 +148,26 @@ app.get('/profile', islogin, async (req, res) => {
     }
 });
 
-app.post('/post', islogin, async (req, res) => {
+
+app.post('/post', islogin, upload.array('media', 5), async (req, res) => {
     try {
         let user = await userModel.findOne({ email: req.user.email });
         if (!user) {
             return res.status(404).send('User not found');
         }
 
-        let post = await postModel.create({ 
+        let mediaFiles = [];
+        if (req.files && req.files.length > 0) {
+            mediaFiles = req.files.map(file => ({
+                filename: file.filename,
+                mimetype: file.mimetype
+            }));
+        }
+
+        let post = await postModel.create({
             user: user._id,
-            content: req.body.content
+            content: req.body.content,
+            media: mediaFiles
         });
 
         user.post.push(post._id);
@@ -151,18 +178,28 @@ app.post('/post', islogin, async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+app.get('/mediaupload' , (req, res) => {
+    res.render('mediaupload');
+})
 
-app.get("/like/:id", islogin, async (req, res) => {
-    let post = await postModel.findOne({ _id: req.params.id }).populate("user");
-    if(post.likes.indexOf(req.user._id) == -1) {
-        post.likes.push(req.user._id);
-    }
-    else{
-        post.likes.splice(post.likes.indexOf(req.user._id), 1);
-    }
-    await post.save();
-    res.redirect("/profile");
+
+
+
+app.get('/edit/:id', async (req, res)=>{
+    let post = await postModel.findById(req.params.id);
+
+    res.render('edit', { post });
+})    
+app.post('/update/:id', async (req, res) => {
+    let { content } = req.body;
+    await postModel.findOneAndUpdate(
+        { _id: req.params.id },
+        { content },
+        { new: true }
+    );
+    res.redirect('/profile');
 });
+
 app.get('/dashboard', islogin, async (req, res) => {
     try {
         let posts = await postModel.find().populate("user");
@@ -180,6 +217,7 @@ function islogin(req, res, next) {
         try {
             let data = jwt.verify(req.cookies.token, "shhhh");
             req.user = data;
+            console.log('Decoded user data:', req.user);  // Add this line
             next();
         } catch (err) {
             res.clearCookie("token");
