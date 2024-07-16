@@ -69,17 +69,40 @@ app.post('/register', async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
-app.get("/like/:id", islogin, async (req, res) => {
-    let post = await postModel.findOne({ _id: req.params.id }).populate("user");
-    if(post.likes.indexOf(req.user.userid) == -1) {
-        post.likes.push(req.user.userid);
+// app.get("/like/:id", islogin, async (req, res) => {
+//     let post = await postModel.findOne({ _id: req.params.id }).populate("user");
+//     if(post.likes.indexOf(req.user.userid) == -1) {
+//         post.likes.push(req.user.userid);
+//     }
+//     else{
+//         post.likes.splice(post.likes.indexOf(req.user.userid), 1);
+//     }
+//     await post.save();
+//     res.redirect("/dashboard");
+// });
+
+app.get('/like/:id', islogin, async (req, res) => {
+    try {
+        let post = await postModel.findOne({ _id: req.params.id }).populate("user");
+        if (!post) {
+            return res.status(404).json({ success: false, message: 'Post not found' });
+        }
+
+        if (post.likes.indexOf(req.user.userid) === -1) {
+            post.likes.push(req.user.userid);
+        } else {
+            post.likes.splice(post.likes.indexOf(req.user.userid), 1);
+        }
+
+        await post.save();
+
+        res.json({ success: true, likes: post.likes.length });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Server Error' });
     }
-    else{
-        post.likes.splice(post.likes.indexOf(req.user.userid), 1);
-    }
-    await post.save();
-    res.redirect("/dashboard");
 });
+
 
 app.get('/profile/:id', async (req, res) => {
     try {

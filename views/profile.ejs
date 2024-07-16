@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile</title>
+    <title>Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .textarea-container {
@@ -43,7 +43,6 @@
                     <img width="30px" height="30px" src="/images/Untitled.jpeg" alt="Camera Icon" class="camera-icon">
                 </a>
             </div>
-          
             <input type="submit" class="px-3 w-40 py-2 bg-blue-500 block rounded-md mt-2" value="Create new post">
         </form>
         <div class="posts mt-20">
@@ -64,9 +63,9 @@
                             <% }) %>
                         <% } %>
                         <p class="text-sm tracking-tight"><%= post.content %></p>
-                        <small class="mt-2 inline-block"><%= post.likes.length %> likes</small>
+                        <small id="like-count-<%= post._id %>" class="mt-2 inline-block"><%= post.likes.length %> likes</small>
                         <div class="btns flex gap-4 mt-1">
-                            <a class="text-blue-500" href="/like/<%= post._id %>">Like</a>
+                            <a class="like-button text-blue-500" href="#" data-post-id="<%= post._id %>">Like</a>
                             <a class="text-zinc-600" href="/edit/<%= post._id %>">Edit</a>
                         </div>
                     </div>
@@ -74,5 +73,35 @@
             </div>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const likeButtons = document.querySelectorAll('.like-button');
+
+            likeButtons.forEach(button => {
+                button.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    const postId = this.dataset.postId;
+
+                    fetch(`/like/${postId}`, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const likeCountElement = document.querySelector(`#like-count-${postId}`);
+                            likeCountElement.textContent = `${data.likes} likes`;
+                        } else {
+                            alert('Failed to update like');
+                        }
+                    })
+                    .catch(err => console.error('Error:', err));
+                });
+            });
+        });
+    </script>
 </body>
 </html>
