@@ -12,6 +12,11 @@ const mediaSchema = new mongoose.Schema({
     }
 });
 
+const commentSchema = new mongoose.Schema({
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    text: String,
+    timestamp: { type: Date, default: Date.now }
+});
 const postSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
@@ -27,6 +32,10 @@ const postSchema = new mongoose.Schema({
     },
     media: { 
         type: [mediaSchema], // Array of media objects
+        required: false
+    },
+    comments: {
+        type: [commentSchema],
         required: false
     },
     likes: [

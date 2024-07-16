@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Details</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div class="w-full min-h-screen bg-zinc-900 text-white p-6 flex">
+        <div class="post mb-4 w-full max-w-md mr-auto rounded-md p-3 border border-zinc-800">
+            <div class="flex gap-2">
+                <div class="w-8 h-8 rounded-md overflow-hidden">
+                    <img class="w-full h-full object-cover" src="/images/uploads/<%= post.user.profilepic %>" alt="Profile Picture">
+                </div>
+                <h4 class="text-blue-500 mb-2"><%= post.user.name %></h4>
+            </div>
+            <% if (post.media.length > 0) { %>
+                <% post.media.forEach(function(media) { %>
+                    <% if (media.mimetype.startsWith('image')) { %>
+                        <img src="/images/uploads/<%= media.filename %>" alt="Post Image" class="w-full h-32 object-cover mb-2 rounded-md">
+                    <% } else if (media.mimetype.startsWith('video')) { %>
+                        <video controls class="w-full h-32 object-cover mb-2 rounded-md">
+                            <source src="/videos/uploads/<%= media.filename %>" type="<%= media.mimetype %>">
+                        </video>
+                    <% } %>
+                <% }) %>
+            <% } %>
+            <p class="text-sm tracking-tight"><%= post.content %></p>
+            <small class="mt-2 inline-block"><%= post.likes.length %> likes</small>
+            <div class="btns flex gap-2 mt-1">
+                <a class="text-blue-500" href="/like/<%= post._id %>">Like</a>
+                <a class="text-zinc-600" href="/edit/<%= post._id %>">Edit</a>
+            </div>
+            <div class="comments mt-4">
+                <h5 class="text-lg">Comments:</h5>
+                <% if (post.comments.length > 0) { %>
+                    <% post.comments.forEach(function(comment) { %>
+                        <div class="comment mb-2">
+                            <strong>
+                                <% if (comment.user) { %>
+                                    <%= comment.user.name %>:
+                                <% } else { %>
+                                    Unknown User:
+                                <% } %>
+                            </strong>
+                            <%= comment.text %>
+                            <small class="text-zinc-500"> - <%= comment.timestamp.toLocaleString() %></small>
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <p>No comments yet.</p>
+                <% } %>
+            </div>
+            <form action="/comment/<%= post._id %>" method="POST" class="mt-4">
+                <textarea name="text" class="w-full p-2 rounded-md bg-zinc-700" placeholder="Add a comment" required></textarea>
+                <button type="submit" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded-md">Submit</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

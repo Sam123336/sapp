@@ -14,9 +14,9 @@
             <h3 class="text-zinc-400">Posts from all users</h3>
             <div class="postcontainer mt-5">
                 <% posts.reverse().forEach(function(post) { %>
-                    <div class="post mb-2 w-full rounded-md p-4 border-2 border-zinc-800">
+                    <div class="post mb-4 w-full max-w-md rounded-md p-2 border border-zinc-800">
                         <div class="flex gap-3">
-                            <div class="w-10 h-10 rounded-md overflow-hidden">
+                            <div class="w-8 h-8 rounded-md overflow-hidden">
                                 <a href="/profile/<%= post.user._id %>">
                                     <img class="w-full h-full object-cover" src="/images/uploads/<%= post.user.profilepic %>" alt="Profile Picture">
                                 </a>
@@ -26,9 +26,9 @@
                         <% if (post.media.length > 0) { %>
                             <% post.media.forEach(function(media) { %>
                                 <% if (media.mimetype.startsWith('image')) { %>
-                                    <img src="/images/uploads/<%= media.filename %>" alt="Post Image" class="w-full h-auto mb-2 rounded-md">
+                                    <img src="/images/uploads/<%= media.filename %>" alt="Post Image" class="w-full h-40 object-cover mb-2 rounded-md">
                                 <% } else if (media.mimetype.startsWith('video')) { %>
-                                    <video controls class="w-full h-auto mb-2 rounded-md">
+                                    <video controls class="w-full h-40 object-cover mb-2 rounded-md">
                                         <source src="/videos/uploads/<%= media.filename %>" type="<%= media.mimetype %>">
                                     </video>
                                 <% } %>
@@ -39,12 +39,16 @@
                         <div class="btns flex gap-4 mt-1">
                             <a class="text-blue-500" href="/like/<%= post._id %>">Like</a>
                             <a class="text-zinc-600" href="/edit/<%= post._id %>">Edit</a>
+                            <a class="text-zinc-600" href="/post/<%= post._id %>">Comments</a> <!-- Link to post details page -->
                         </div>
                     </div>
                 <% }) %>
             </div>
         </div>
     </div>
+</body>
+</html>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const likeButtons = document.querySelectorAll('.like-button');

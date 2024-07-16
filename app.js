@@ -96,7 +96,8 @@ app.get('/like/:id', islogin, async (req, res) => {
 
         await post.save();
 
-        res.json({ success: true, likes: post.likes.length });
+        // res.json({ success: true, likes: post.likes.length });
+        res.redirect('/dashboard')
     } catch (err) {
         console.error(err);
         res.status(500).json({ success: false, message: 'Server Error' });
@@ -165,6 +166,71 @@ app.get('/profile', islogin, async (req, res) => {
             return res.status(404).send('User not found');
         }
         res.render('profile', { user: user });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
+app.post('/comment/:postId', islogin, async (req, res) => {
+    try {
+        const { text } = req.body;
+        const postId = req.params.postId;
+        const userId = req.user.userid;
+
+        const post = await postModel.findById(postId);
+        if (!post) {
+            return res.status(404).send('Post not found');
+        }
+
+        post.comments.push({ text, user: userId });
+        await post.save();
+
+        res.redirect(`/post/${postId}`);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Route to fetch post details including comments
+// app.get('/post/:id', async (req, res) => {
+//     try {
+//         let post = await postModel.findById(req.params.id)
+//         .populate('user')
+//         .populate({
+//             path: 'comments',
+//             populate: {
+//                 path: 'user'
+//             }
+//         });
+
+//         if (!post) {
+//             return res.status(404).send('Post not found');
+//         }
+//         res.render('post', { post: post, user: req.user });
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).send('Server Error');
+//     }
+// });
+app.get('/post/:id', islogin, async (req, res) => {
+    try {
+        let post = await postModel.findById(req.params.id)
+            .populate('user')
+            .populate({
+                path: 'comments.user',
+                select: 'name'
+            });
+
+        if (!post) {
+            return res.status(404).send('Post not found');
+        }
+
+        console.log('Post:', post);
+        console.log('Comments:', post.comments);
+
+        res.render('post', { post: post, user: req.user });
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');
