@@ -137,7 +137,7 @@ app.get('/logout', (req, res) => {
 app.get('/profile', islogin, async (req, res) => {
     try {
         let user = await userModel.findOne({ email: req.user.email }).populate("post");
-        console.log(user);  
+        // console.log(user);  
         if (!user) {
             return res.status(404).send('User not found');
         }
